@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>报修工单录入</title>
+<style>
+  body{font-family:system-ui,"Microsoft YaHei",sans-serif;max-width:560px;margin:32px auto;padding:0 16px;color:#1f2937}
+  h1{font-size:20px}
+  label{display:block;margin:12px 0 4px;font-size:14px;color:#374151}
+  input,textarea{width:100%;box-sizing:border-box;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px}
+  button{margin-top:16px;padding:9px 18px;border:0;border-radius:6px;background:#2563eb;color:#fff;font-size:14px;cursor:pointer}
+  #msg{margin-top:12px;font-size:14px;white-space:pre-wrap}
+  .ok{color:#15803d}.err{color:#b91c1c}
+</style>
+</head>
+<body>
+<h1>📝 售后报修工单录入</h1>
+<form id="form">
+  <label>工单号 *</label><input name="ticket_no" required placeholder="T-20260819-001">
+  <label>客户名称 *</label><input name="customer" required placeholder="华源纺织厂">
+  <label>联系电话 *</label><input name="phone" required placeholder="138****5678">
+  <label>设备类型 *</label><input name="device_type" required placeholder="工业缝纫机">
+  <label>设备编号 *</label><input name="device_sn" required placeholder="SN-3X-0217">
+  <label>故障现象 *</label><textarea name="fault" rows="3" required placeholder="缝纫时线迹跳针，机针区有异响"></textarea>
+  <label>优先级</label>
+  <select name="priority" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px">
+    <option>普通</option><option>紧急</option><option>特急</option>
+  </select>
+  <label>备注</label><input name="note" placeholder="客户要求周四上午上门">
+  <button type="submit">提交工单</button>
+</form>
+<div id="msg"></div>
+<script>
+"use strict";
+var form = document.getElementById("form");
+var msg = document.getElementById("msg");
+form.addEventListener("submit", async function(ev){
+  ev.preventDefault();
+  var data = Object.fromEntries(new FormData(form).entries());
+  var res = await fetch("/api/tickets", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(data)
+  });
+  var out = await res.json();
+  if(out.ok){
+    msg.className = "ok";
+    msg.textContent = "✅ 提交成功，记录 id=" + out.id + "，表单已清空";
+    form.reset();
+  } else {
+    msg.className = "err";
+    msg.textContent = "❌ " + (out.error || "提交失败");
+  }
+});
+</script>
+</body>
+</html>

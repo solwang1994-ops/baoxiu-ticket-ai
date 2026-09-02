@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>报修工单台账</title>
+<style>
+  body{font-family:system-ui,"Microsoft YaHei",sans-serif;max-width:960px;margin:24px auto;padding:0 16px;color:#1f2937}
+  h1{font-size:20px}
+  .bar{margin:12px 0}
+  select,button{padding:7px 12px;border:1px solid #d1d5db;border-radius:6px;background:#fff;font-size:14px}
+  button.primary{background:#2563eb;color:#fff;border:0;cursor:pointer}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+  th,td{border:1px solid #e5e7eb;padding:6px 8px;text-align:left;vertical-align:top}
+  th{background:#f3f4f6}
+  #count{color:#6b7280;font-size:13px}
+  a{color:#2563eb;text-decoration:none}
+</style>
+</head>
+<body>
+<h1>📋 报修工单台账</h1>
+<div class="bar">
+  状态：
+  <select id="status">
+    <option value="">全部</option>
+    <option>待处理</option>
+    <option>已处理</option>
+  </select>
+  <button id="export" class="primary">⬇ 导出 CSV</button>
+  <span id="count"></span>
+</div>
+<table id="table">
+  <thead><tr><th>ID</th><th>单号</th><th>客户</th><th>电话</th><th>设备类型</th><th>设备编号</th><th>故障现象</th><th>日期</th><th>优先级</th><th>状态</th></tr></thead>
+  <tbody></tbody>
+</table>
+<script>
+"use strict";
+async function load(){
+  var status = document.getElementById("status").value;
+  var url = "/api/tickets" + (status ? "?status=" + encodeURIComponent(status) : "");
+  var res = await fetch(url);
+  var out = await res.json();
+  var tbody = document.querySelector("#table tbody");
+  tbody.innerHTML = "";
+  (out.tickets || []).forEach(function(t){
+    var tr = document.createElement("tr");
+    ["id","ticket_no","customer","phone","device_type","device_sn","fault","report_date","priority","status"]
+      .forEach(function(k){
+        var td = document.createElement("td");
+        td.textContent = t[k] == null ? "" : t[k];
+        tr.appendChild(td);
+      });
+    tbody.appendChild(tr);
+  });
+  document.getElementById("count").textContent = "共 " + (out.tickets || []).length + " 条";
+}
+document.getElementById("status").addEventListener("change", load);
+document.getElementById("export").addEventListener("click", function(){
+  var status = document.getElementById("status").value;
+  window.location.href = "/api/tickets/export" + (status ? "?status=" + encodeURIComponent(status) : "");
+});
+load();
+</script>
+</body>
+</html>

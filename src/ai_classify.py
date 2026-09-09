@@ -52,6 +52,7 @@ def ai_classify(ticket: dict, timeout: float = 15.0) -> dict:
     api_key = os.environ.get("DEEPSEEK_API_KEY", "").strip()
     if not api_key:
         return rule_fallback(ticket, "未配置 DEEPSEEK_API_KEY")
+
     prompt = PROMPT_TEMPLATE.format(ticket=json.dumps(ticket, ensure_ascii=False))
     payload = {
         "model": "deepseek-v4-flash",
@@ -66,6 +67,7 @@ def ai_classify(ticket: dict, timeout: float = 15.0) -> dict:
             headers={"Content-Type": "application/json",
                      "Authorization": "Bearer " + api_key},
             method="POST")
+
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             data = json.loads(resp.read().decode("utf-8"))
         content = str(((data.get("choices") or [{}])[0].get("message") or {})
@@ -77,6 +79,7 @@ def ai_classify(ticket: dict, timeout: float = 15.0) -> dict:
         if not result["category"] or not result["advice"]:
             raise ValueError("LLM 返回字段不完整")
         return result
+
     except (urllib.error.URLError, TimeoutError, OSError,
             ValueError, KeyError, IndexError, TypeError) as exc:
         return rule_fallback(ticket, f"API 调用失败：{exc!r}")
@@ -85,8 +88,11 @@ def ai_classify(ticket: dict, timeout: float = 15.0) -> dict:
 if __name__ == "__main__":
     demo = {"device_type": "工业缝纫机", "fault": "缝纫时设备异响，机针区有噪音",
             "note": ""}
+
     result = ai_classify(demo)
+
     print(f"分类：{result['category']}（引擎：{result['engine']}）")
     print(f"建议：{result['advice']}")
+    
     if result.get("reason"):
         print(f"降级原因：{result['reason']}")

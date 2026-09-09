@@ -10,8 +10,10 @@
   label{display:block;margin:12px 0 4px;font-size:14px;color:#374151}
   input,textarea{width:100%;box-sizing:border-box;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px}
   button{margin-top:16px;padding:9px 18px;border:0;border-radius:6px;background:#2563eb;color:#fff;font-size:14px;cursor:pointer}
+  button.second{background:#0f766e;margin-left:8px}
   #msg{margin-top:12px;font-size:14px;white-space:pre-wrap}
   .ok{color:#15803d}.err{color:#b91c1c}
+  .ai-box{margin-top:14px;padding:10px;border:1px dashed #9ca3af;border-radius:8px;display:none}
 </style>
 </head>
 <body>
@@ -29,8 +31,12 @@
   </select>
   <label>备注</label><input name="note" placeholder="客户要求周四上午上门">
   <button type="submit">提交工单</button>
+  <button type="button" class="second" id="ai-btn">🤖 AI 故障分类</button>
 </form>
 <div id="msg"></div>
+<div class="ai-box" id="ai-box">
+  <b>AI 分类结果：</b><span id="ai-result"></span>
+</div>
 <script>
 "use strict";
 var form = document.getElementById("form");
@@ -52,6 +58,21 @@ form.addEventListener("submit", async function(ev){
     msg.className = "err";
     msg.textContent = "❌ " + (out.error || "提交失败");
   }
+});
+document.getElementById("ai-btn").addEventListener("click", async function(){
+  var data = Object.fromEntries(new FormData(form).entries());
+  var box = document.getElementById("ai-box");
+  var result = document.getElementById("ai-result");
+  box.style.display = "block";
+  result.textContent = "分析中…";
+  var res = await fetch("/api/ai_classify", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(data)
+  });
+  var out = await res.json();
+  result.textContent = out.category + "｜" + out.advice +
+    (out.engine === "rule" ? "（规则引擎" + (out.reason ? "，降级原因：" + out.reason : "") + "）" : "（AI 引擎）");
 });
 </script>
 </body>

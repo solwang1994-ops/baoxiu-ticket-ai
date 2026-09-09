@@ -76,6 +76,7 @@ def list_tickets():
 @app.get("/api/tickets/export")
 def export_tickets():
     """任务12：导出 CSV（utf-8-sig，Excel 打开中文不乱码）。"""
+    from urllib.parse import quote  # ← 这行不能少
     status = str(request.args.get("status") or "").strip()
     stamp = datetime.date.today().isoformat()
     name = f"tickets_{status or 'all'}_{stamp}.csv"
@@ -85,10 +86,13 @@ def export_tickets():
         count = db.export_csv(conn, path, status=status)
     finally:
         conn.close()
+
+    filename_encoded = quote(name)  # ← 这行不能少
+
     return Response(
         path.read_bytes(),
         mimetype="text/csv; charset=utf-8",
-        headers={"Content-Disposition": f'attachment; filename="{name}"'})
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename_encoded}"})
 
 
 @app.post("/api/ai_classify")
